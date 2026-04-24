@@ -442,6 +442,6 @@ BSD-3-Clause
 
 <div align="center">
 
-**Developed by Ryan Gomez, Renya Peter and Nysa Lakhotia — Team SOYL**
+**Developed by Ryan Gomez, Renya Peter and Nysa Lakhotia**
 
 </div>
