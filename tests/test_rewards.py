@@ -64,10 +64,10 @@ def test_reward_weights_sum_to_one():
 
 def test_reward_weights_exact_values():
     assert REWARD_WEIGHTS == {
-        "revenue": 0.35,
-        "interference": 0.20,
-        "compliance": 0.25,
-        "justification": 0.20,
+        "revenue": 0.45,
+        "interference": 0.05,
+        "compliance": 0.10,
+        "justification": 0.40,
     }
 
 
@@ -292,7 +292,7 @@ def test_justification_no_mitigation_when_judge_agrees():
 def test_total_reward_is_weighted_sum():
     comps = {"revenue": 1.0, "interference": 0.0, "compliance": 0.5, "justification": 0.4}
     expected = (
-        0.35 * 1.0 + 0.20 * 0.0 + 0.25 * 0.5 + 0.20 * 0.4
+        0.45 * 1.0 + 0.05 * 0.0 + 0.10 * 0.5 + 0.40 * 0.4
     )
     assert compute_total_reward(comps) == pytest.approx(expected)
 
@@ -305,5 +305,5 @@ def test_total_reward_clips_to_minus_one_one():
 
 
 def test_total_reward_handles_missing_components():
-    assert compute_total_reward({"revenue": 1.0}) == pytest.approx(0.35)
+    assert compute_total_reward({"revenue": 1.0}) == pytest.approx(0.45)
     assert compute_total_reward({}) == 0.0

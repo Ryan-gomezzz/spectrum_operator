@@ -123,7 +123,7 @@ def test_coalition_diversity():
 def test_auction_ground_truth_well_formed():
     for seed in (0, 5, 123, 250):
         s, g = generate_auction_scenario(seed)
-        assert len(g.optimal_actions) == s.num_rounds == 6
+        assert len(g.optimal_actions) == s.num_rounds == 4
         for entry in g.optimal_actions:
             assert "bid_amount" in entry
             assert "round_index" in entry
