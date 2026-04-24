@@ -979,7 +979,7 @@ def generate_auction_scenario(seed: int) -> Tuple[Scenario, GroundTruth]:
 
     num_players = 3
     num_licenses = 4
-    num_rounds = 6
+    num_rounds = 4
 
     # Deterministic budgets per player (learner is player 0).
     budgets = [round(50.0 + rng.uniform(0.0, 50.0), 2) for _ in range(num_players)]
@@ -1027,7 +1027,7 @@ def generate_auction_scenario(seed: int) -> Tuple[Scenario, GroundTruth]:
         running_budget = max(0.0, running_budget - expected_spend)
 
     description = (
-        f"Sealed-bid auction, 3 operators bidding over 6 rounds for 4 spectrum licenses "
+        f"Sealed-bid auction, 3 operators bidding over 4 rounds for 4 spectrum licenses "
         f"(flavor: CBRS PAL). Each round reveals the winning bid publicly. "
         f"Learner budget: {budgets[0]}; total rounds: {num_rounds}."
     )

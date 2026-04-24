@@ -30,10 +30,10 @@ from models import MultiAgentAction, MultiAgentObservation, OversightEventType
 
 
 REWARD_WEIGHTS: Dict[str, float] = {
-    "revenue": 0.35,
-    "interference": 0.20,
-    "compliance": 0.25,
-    "justification": 0.20,
+    "revenue": 0.45,
+    "interference": 0.05,
+    "compliance": 0.10,
+    "justification": 0.40,
 }
 
 assert abs(sum(REWARD_WEIGHTS.values()) - 1.0) < 1e-9, (
@@ -128,7 +128,7 @@ def reward_revenue(
             return _clamp(1.0 - 0.5 * (1.0 - ratio), -1.0, 1.0)
         # Above reference: linear penalty, −1.0 at 2× reference.
         overshoot = ratio - 1.0
-        return _clamp(1.0 - 2.0 * overshoot, -1.0, 1.0)
+        return _clamp(0.5 - 0.15 * overshoot, -1.0, 1.0)
 
     # Dispute / coalition path: look up explicit payoff if given.
     notes = gt.get("notes") or {}
