@@ -1,6 +1,6 @@
 {
   "auction": {
-    "mean_reward": -0.0427,
+    "mean_reward": -0.2795,
     "episodes": 10,
     "seeds": [
       0,
@@ -16,7 +16,7 @@
     ]
   },
   "dispute": {
-    "mean_reward": 0.14,
+    "mean_reward": 0.17,
     "episodes": 10,
     "seeds": [
       0,
@@ -32,7 +32,7 @@
     ]
   },
   "coalition": {
-    "mean_reward": 0.14,
+    "mean_reward": 0.115,
     "episodes": 10,
     "seeds": [
       0,
