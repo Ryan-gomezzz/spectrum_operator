@@ -1,0 +1,42 @@
+name: rf_spectrum_env
+version: "2.0.0"
+description: >
+  RF Spectrum Allocation Environment for training AI agents to manage
+  radio frequency spectrum. Round 2 adds three multi-agent games:
+  a sealed-bid auction, a dispute-resolution game with opponent-type
+  inference, and an iterated prisoner's-dilemma coalition game with a
+  reputation-tracking regulator. Round 1 single-agent tasks remain
+  untouched.
+tasks:
+  - name: easy
+    description: Low-occupancy spectrum with straightforward allocation requests.
+    difficulty: easy
+    steps_per_episode: 5
+  - name: medium
+    description: Moderate occupancy with priority conflicts and guard band awareness.
+    difficulty: medium
+    steps_per_episode: 8
+  - name: disaster_response
+    description: Natural disaster scenario with cascading emergency requests, preemption, and priority overrides.
+    difficulty: medium-hard
+    steps_per_episode: 10
+  - name: hard
+    description: Dense urban spectrum with cascading preemptions, cognitive radio dynamics, and military operations.
+    difficulty: hard
+    steps_per_episode: 12
+  - name: spectrum_auction
+    description: Forward-looking allocation with queue visibility requiring globally optimal planning.
+    difficulty: expert
+    steps_per_episode: 8
+  - name: auction
+    description: Sealed-bid auction with partial observability — 3 operators bidding over 6 rounds for 4 spectrum licenses.
+    difficulty: medium
+    steps_per_episode: 6
+  - name: dispute
+    description: Dispute-resolution game — learner must infer opponent personality from observed behavior and pick the best response.
+    difficulty: medium
+    steps_per_episode: 4
+  - name: coalition
+    description: Iterated prisoner's-dilemma coalition game with a reputation-tracking regulator — cooperate, defect, or abstain.
+    difficulty: hard
+    steps_per_episode: 6
