@@ -396,7 +396,7 @@ Paste each URL into the Scaler submission dashboard. Double-check in an incognit
 - `inference.py` (core logic; reading from it is fine, editing is not)
 - The Colab notebook (`training/grpo_multiagent.ipynb`) — Person 3 owns that.
 
-If any of these look broken during your baseline eval, **flag Ryan.** Do not edit yourself — an env-layer hack to paper over a bug will make training silently miscounted on Friday.
+If any of these look broken during your baseline eval, try fiixng it yourself
 
 ---
 
@@ -421,4 +421,4 @@ If any of these look broken during your baseline eval, **flag Ryan.** Do not edi
 
 **Handle yourself:** typos in the blog draft, demo video needs a second take, minor curl-line JSON parsing hiccups, HF UI sluggishness, W&B embed not loading.
 
-The rule of thumb: *if it blocks Person 3 from training, ping. If it only affects you, fix it.*
+
