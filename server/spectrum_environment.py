@@ -930,6 +930,7 @@ class SpectrumEnvironment(Environment):
             total_rounds=total_rounds,
             done=done,
             reward=reward,
+            reward_components=reward_components or {},
             metadata=metadata,
         )
 
