@@ -10,10 +10,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from openenv.core.env_server import create_fastapi_app
 
-from models import SpectrumAction, SpectrumObservation
+from models import SpectrumAction, MultiAgentAction, SpectrumObservation, MultiAgentObservation
 from server.spectrum_environment import SpectrumEnvironment
 
-app = create_fastapi_app(SpectrumEnvironment, SpectrumAction, SpectrumObservation)
+app = create_fastapi_app(SpectrumEnvironment, MultiAgentAction, MultiAgentObservation)
 
 # The OpenEnv harness creates environment instances lazily per-session.
 # For endpoints that need access to "the most recent" episode (the demo
