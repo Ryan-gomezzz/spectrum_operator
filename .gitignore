@@ -1,0 +1,41 @@
+# Internal team docs (not for submission / not for reviewers)
+docs/project_explainer.md
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+.pytest_cache/
+.tox/
+.coverage
+.hypothesis/
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Training artifacts that come out of the Colab run.
+# Keep `training/plots/` and `training/logs/` COMMITTED — they are evidence
+# the judges need to see. Only the Colab bundles and the saved checkpoint
+# directories are ignored.
+training-artifacts-*.zip
+rf-spectrum-*-trained/
+rf-spectrum-*-lora/
+
+# Wandb local cache (we link the remote run URL in the README instead)
+wandb/
