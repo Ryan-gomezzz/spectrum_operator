@@ -1,0 +1,18 @@
+REPLACE WITH: W&B multi-panel chart showing the four reward components for
+the auction run only — revenue, justification, interference, compliance.
+
+Save the real image as `per_component_breakdown.png` in this directory and
+delete this `.PLACEHOLDER` file.
+
+Capture instructions:
+- W&B project, auction run only (deselect dispute, coalition)
+- Four-panel grid (or 2x2): one panel per component
+  - top-left:    `train/reward_revenue`
+  - top-right:   `train/reward_justification`
+  - bottom-left: `train/reward_interference`
+  - bottom-right:`train/reward_compliance`
+- Each panel: x-axis = global_step, y-axis = component value
+- Shared step-axis range across the four panels so the trends are
+  comparable visually
+- Panel titles: "Revenue", "Justification", "Interference", "Compliance"
+- Export as a single PNG at >= 1400px wide

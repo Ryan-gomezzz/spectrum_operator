@@ -1,0 +1,17 @@
+REPLACE WITH: close-up of the oversight events panel showing several
+different event types (warning, violation, commendation, reputation update).
+
+Save the real image as `regulator_log.png` in this directory and delete
+this `.PLACEHOLDER` file.
+
+Capture instructions:
+- Run an episode (auction or coalition — coalition will produce more
+  reputation_update events)
+- Wait until the oversight events panel has accumulated 5+ events
+- Crop the screenshot to just the right-hand "Oversight Events" column
+  (no need for the whole page)
+- Aim for at least one of each: WARNING, VIOLATION, COMMENDATION,
+  REPUTATION_UPDATE in frame. AUDIT_TRIGGERED is a bonus.
+- The color-coded severity bars and the explanation text should be
+  legible — zoom in if needed
+- Export at >= 800px wide PNG
