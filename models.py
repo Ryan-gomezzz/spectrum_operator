@@ -281,6 +281,10 @@ class MultiAgentObservation(SpectrumObservation):
         ge=1,
         description="Episode horizon (number of rounds).",
     )
+    reward_components: Dict[str, float] = Field(
+        default_factory=dict,
+        description="Decomposed reward components from the last step.",
+    )
 
 
 class OperatorState(BaseModel):
