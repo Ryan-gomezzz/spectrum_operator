@@ -32,7 +32,7 @@ pinned: false
 | **Tasks** | **5 Round 1** (single-agent) · **3 NEW multi-agent**: auction · dispute · coalition |
 | **Reward** | 4 components summing to 1.0: revenue (0.45) · justification (0.40) · compliance (0.10) · interference (0.05) |
 
-<sub>OpenEnv manifest: [`openenv.yaml`](openenv.yaml) · Env name: `rf_spectrum_env` · Design spec: [`docs/multi_agent_design.md`](docs/multi_agent_design.md)</sub>
+<sub>OpenEnv manifest: [`openenv.yaml`](openenv.yaml) · Env name: `rf_spectrum_env` · Design spec: [`docs/multi_agent_design.md`](docs/multi_agent_design.md) · Round 1 submission: [Ryan-gomezzz/rf_spectrum](https://github.com/Ryan-gomezzz/rf_spectrum)</sub>
 
 </div>
 
@@ -200,6 +200,8 @@ Full spec: [`docs/multi_agent_design.md`](docs/multi_agent_design.md).
 ---
 
 ## Tasks
+
+The five Round 1 single-agent tasks ship in this repo unchanged from our Round 1 submission ([Ryan-gomezzz/rf_spectrum](https://github.com/Ryan-gomezzz/rf_spectrum)); the three new tasks at the bottom are the multi-agent games added for Round 2.
 
 | Task | Steps / episode | Difficulty | Round | What the agent must learn |
 |:-----|:---------------:|:-----------|:-----:|:--------------------------|
