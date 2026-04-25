@@ -62,6 +62,26 @@ async def get_oversight_log():
         "task_name": _shared_env.state.task_name,
         "step_count": _shared_env.state.step_count,
     }
+@app.post("/env/reset")
+async def env_reset(payload: dict = {}):
+    """Stateful reset using the shared environment."""
+    seed = payload.get("seed")
+    task_name = payload.get("task_name")
+    kwargs = {}
+    if seed is not None: kwargs["seed"] = int(seed)
+    if task_name is not None: kwargs["task_name"] = task_name
+    obs = _shared_env.reset(**kwargs)
+    return {"observation": obs.model_dump(), "reward": None, "done": False}
+
+
+@app.post("/env/step")
+async def env_step(payload: dict = {}):
+    """Stateful step using the shared environment."""
+    from models import MultiAgentAction
+    action_data = payload.get("action", payload)
+    action = MultiAgentAction(**action_data)
+    obs = _shared_env.step(action)
+    return {"observation": obs.model_dump(), "reward": obs.reward, "done": obs.done}
 
 
 def main():
