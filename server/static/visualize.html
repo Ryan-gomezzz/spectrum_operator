@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RF Spectrum Multi-Agent Environment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui'] },
+        colors: {
+          ink: { 950: '#06080f', 900: '#0b1220', 800: '#111a2e', 700: '#1a2540', 600: '#243156' },
+          accent: { DEFAULT: '#4F46E5', soft: '#6366f1' },
+        },
+      },
+    },
+  };
+</script>
+<style>
+  html, body { background: #06080f; color: #e5e7eb; font-family: 'Inter', sans-serif; }
+  .num-mono { font-variant-numeric: tabular-nums; }
+  .gauge-track { background: linear-gradient(90deg, #1f2937 0%, #1f2937 100%); }
+  .gauge-fill { transition: width 600ms cubic-bezier(.4,.2,.2,1); }
+  .reward-bar { transition: width 600ms cubic-bezier(.4,.2,.2,1); }
+  .scrollbar-thin::-webkit-scrollbar { height: 8px; width: 8px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: #243156; border-radius: 4px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .fade-enter { opacity: 0; transform: translateY(-4px); }
+  .fade-enter-active { opacity: 1; transform: translateY(0); transition: all 300ms ease; }
+  [x-cloak] { display: none !important; }
+</style>
+<script defer src="https://unpkg.com/alpinejs@3.13.5/dist/cdn.min.js"></script>
+</head>
+<body class="min-h-screen bg-ink-950 antialiased">
+
+<div x-data="visualizer()" x-init="init()" x-cloak class="min-h-screen flex flex-col">
+
+  <!-- ── Header bar ─────────────────────────────────────────────── -->
+  <header class="border-b border-ink-700 bg-ink-900/80 backdrop-blur sticky top-0 z-20">
+    <div class="max-w-[1600px] mx-auto px-8 py-5 flex items-center justify-between gap-6">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight text-white">RF Spectrum Multi-Agent Environment</h1>
+        <p class="text-sm text-gray-400 mt-1">A multi-agent training environment for negotiation under regulatory oversight</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button
+          class="px-4 py-2 rounded-lg text-sm font-medium border border-accent/40 bg-accent/10 text-indigo-200 hover:bg-accent/20 transition"
+          :class="{'opacity-60 cursor-not-allowed': running}"
+          :disabled="running"
+          title="Driven by a hardcoded scripted policy (sealed-bid: small fixed bid; dispute: always negotiate; coalition: always cooperate)."
+          @click="mode = 'baseline'">
+          Run baseline
+        </button>
+        <button
+          class="px-4 py-2 rounded-lg text-sm font-medium border border-ink-700 bg-ink-800 text-gray-500 cursor-not-allowed"
+          disabled
+          title="trained mode requires a fine-tuned policy server">
+          Run trained
+        </button>
+        <select
+          x-model="task"
+          :disabled="running"
+          class="bg-ink-800 border border-ink-700 rounded-lg text-sm px-3 py-2 text-white focus:outline-none focus:border-accent disabled:opacity-60">
+          <option value="auction">auction</option>
+          <option value="dispute">dispute</option>
+          <option value="coalition">coalition</option>
+        </select>
+        <button
+          class="px-5 py-2 rounded-lg text-sm font-semibold bg-accent text-white hover:bg-accent-soft transition shadow-lg shadow-accent/30 disabled:opacity-60 disabled:cursor-not-allowed"
+          :disabled="running"
+          @click="startEpisode()">
+          <span x-show="!running">Start episode</span>
+          <span x-show="running">Running…</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Main 3-column area ────────────────────────────────────── -->
+  <main class="flex-1 max-w-[1600px] mx-auto w-full px-8 py-8 space-y-8">
+
+    <!-- Status strip -->
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3 text-sm text-gray-400">
+        <span class="w-2 h-2 rounded-full"
+              :class="snapshot.status === 'idle' ? 'bg-gray-500' : 'bg-emerald-400 animate-pulse'"></span>
+        <span x-show="snapshot.status === 'idle'">connecting — no episode active</span>
+        <span x-show="snapshot.status !== 'idle'" class="num-mono">
+          task: <span class="text-white font-medium" x-text="snapshot.task_name"></span>
+          &nbsp;·&nbsp; round
+          <span class="text-white font-medium" x-text="(snapshot.round_index || 0) + ' / ' + (snapshot.total_rounds || 0)"></span>
+        </span>
+      </div>
+      <div class="text-xs text-gray-500" x-show="snapshot.status !== 'idle'">
+        <span x-text="taskHelpText()"></span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- ── Left column: YourTel (Learned Agent) ─────────────── -->
+      <section class="bg-ink-900 border border-ink-700 rounded-2xl p-6 space-y-5">
+        <header class="flex items-baseline justify-between">
+          <h2 class="text-base font-semibold text-white">YourTel <span class="text-gray-500 font-normal">(Learned Agent)</span></h2>
+          <span class="text-xs text-gray-500 num-mono" x-text="snapshot.agent ? snapshot.agent.operator_id : '—'"></span>
+        </header>
+
+        <!-- Budget gauge -->
+        <div>
+          <div class="flex items-baseline justify-between mb-1">
+            <span class="text-xs uppercase tracking-wider text-gray-500">Remaining budget</span>
+            <span class="text-xs text-gray-500 num-mono" x-text="'/' + initialBudget.toFixed(0)"></span>
+          </div>
+          <div class="text-3xl font-bold text-white num-mono" x-text="(snapshot.agent ? snapshot.agent.remaining_budget : 0).toFixed(1)"></div>
+          <div class="mt-2 h-2 rounded-full bg-ink-700 overflow-hidden">
+            <div class="gauge-fill h-full bg-gradient-to-r from-emerald-400 to-accent"
+                 :style="`width: ${budgetPct()}%`"></div>
+          </div>
+        </div>
+
+        <!-- Reputation dial -->
+        <div>
+          <div class="flex items-baseline justify-between mb-2">
+            <span class="text-xs uppercase tracking-wider text-gray-500">Reputation</span>
+            <span class="text-2xl font-bold text-white num-mono"
+                  x-text="snapshot.agent ? snapshot.agent.reputation.toFixed(2) : '0.50'"></span>
+          </div>
+          <svg viewBox="0 0 100 60" class="w-full h-20">
+            <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#1f2937" stroke-width="6" stroke-linecap="round" />
+            <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none"
+                  :stroke="reputationColor()"
+                  stroke-width="6" stroke-linecap="round"
+                  pathLength="100"
+                  :stroke-dasharray="`${reputationPct()} 100`"
+                  style="transition: stroke-dasharray 600ms ease, stroke 600ms ease;" />
+          </svg>
+          <p class="text-[11px] text-gray-500 -mt-1">Maintained by the reputation-tracking referee.</p>
+        </div>
+
+        <!-- Licenses held -->
+        <div>
+          <span class="text-xs uppercase tracking-wider text-gray-500">Licenses held</span>
+          <div class="mt-2 flex flex-wrap gap-2 min-h-[28px]">
+            <template x-for="lid in (snapshot.agent ? snapshot.agent.licenses_held : [])" :key="lid">
+              <span class="px-2.5 py-0.5 rounded-md bg-accent/15 border border-accent/40 text-indigo-200 text-xs font-medium num-mono"
+                    x-text="'#' + lid"></span>
+            </template>
+            <span class="text-xs text-gray-600 italic" x-show="!snapshot.agent || !snapshot.agent.licenses_held.length">none</span>
+          </div>
+        </div>
+
+        <!-- Latest action card -->
+        <div class="rounded-xl border border-ink-700 bg-ink-800/60 p-4">
+          <div class="text-xs uppercase tracking-wider text-gray-500 mb-2">Latest action</div>
+          <template x-if="snapshot.agent && snapshot.agent.last_action">
+            <div class="space-y-2">
+              <template x-if="snapshot.agent.last_action.bid_amount !== null && snapshot.agent.last_action.bid_amount !== undefined">
+                <div class="flex items-baseline gap-2">
+                  <span class="text-xs text-gray-400">bid_amount</span>
+                  <span class="text-2xl font-bold text-white num-mono"
+                        x-text="Number(snapshot.agent.last_action.bid_amount).toFixed(2)"></span>
+                </div>
+              </template>
+              <template x-if="snapshot.agent.last_action.dispute_choice">
+                <div class="flex items-baseline gap-2">
+                  <span class="text-xs text-gray-400">dispute_choice</span>
+                  <span class="px-2 py-0.5 rounded-md bg-indigo-500/15 border border-indigo-400/40 text-indigo-200 text-sm font-semibold"
+                        x-text="snapshot.agent.last_action.dispute_choice"></span>
+                </div>
+              </template>
+              <template x-if="snapshot.agent.last_action.cooperation_flag">
+                <div class="flex items-baseline gap-2">
+                  <span class="text-xs text-gray-400">cooperation_flag</span>
+                  <span class="px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-400/40 text-emerald-200 text-sm font-semibold"
+                        x-text="snapshot.agent.last_action.cooperation_flag"></span>
+                </div>
+              </template>
+              <p class="text-sm text-gray-300 leading-snug pt-1 border-t border-ink-700"
+                 x-text="snapshot.agent.last_action.justification || '(no justification)'"></p>
+            </div>
+          </template>
+          <template x-if="!snapshot.agent || !snapshot.agent.last_action">
+            <p class="text-sm text-gray-600 italic">awaiting first action…</p>
+          </template>
+        </div>
+      </section>
+
+      <!-- ── Middle column: Competitor Operators ──────────────── -->
+      <section class="bg-ink-900 border border-ink-700 rounded-2xl p-6 space-y-4">
+        <header>
+          <h2 class="text-base font-semibold text-white">Competitor Operators</h2>
+          <p class="text-xs text-gray-500 mt-1">Bid history is revealed only after each round closes (sealed-bid semantics).</p>
+        </header>
+
+        <template x-if="!snapshot.competitors || !snapshot.competitors.length">
+          <div class="text-sm text-gray-600 italic text-center py-12">no competitors yet</div>
+        </template>
+
+        <template x-for="comp in (snapshot.competitors || [])" :key="comp.slot">
+          <div class="rounded-xl border border-ink-700 bg-ink-800/60 p-4">
+            <div class="flex items-baseline justify-between mb-3">
+              <h3 class="text-sm font-semibold text-white" x-text="'Operator ' + comp.slot"></h3>
+              <span class="text-xs text-gray-500 num-mono"
+                    x-text="comp.bid_history.length + ' rounds'"></span>
+            </div>
+            <div class="flex items-end gap-1.5 h-14 mb-3">
+              <template x-for="(b, i) in comp.bid_history" :key="i">
+                <div class="flex-1 rounded-t bg-gradient-to-t from-accent/30 to-accent/80"
+                     :style="`height: ${competitorBarHeight(comp, b)}%`"
+                     :title="`round ${i+1}: ${Number(b).toFixed(2)}`"></div>
+              </template>
+              <template x-if="!comp.bid_history.length">
+                <div class="w-full h-full rounded bg-ink-700/30"></div>
+              </template>
+            </div>
+            <div class="flex items-baseline justify-between">
+              <span class="text-xs uppercase tracking-wider text-gray-500">Latest bid</span>
+              <span class="text-2xl font-bold text-white num-mono"
+                    x-text="comp.bid_history.length ? Number(comp.bid_history[comp.bid_history.length-1]).toFixed(2) : '—'"></span>
+            </div>
+          </div>
+        </template>
+      </section>
+
+      <!-- ── Right column: Regulator Audit Log ────────────────── -->
+      <section class="bg-ink-900 border border-ink-700 rounded-2xl p-6 space-y-3">
+        <header>
+          <h2 class="text-base font-semibold text-white">Oversight Events</h2>
+          <p class="text-xs text-gray-500 mt-1">Structured audit trail emitted by the reputation-tracking referee.</p>
+        </header>
+
+        <div class="space-y-2 max-h-[600px] overflow-y-auto scrollbar-thin pr-1">
+          <template x-if="!snapshot.oversight_events || !snapshot.oversight_events.length">
+            <div class="text-sm text-gray-600 italic text-center py-12">no events yet</div>
+          </template>
+          <template x-for="(ev, idx) in (snapshot.oversight_events ? [...snapshot.oversight_events].reverse() : [])"
+                    :key="ev.step_number + '-' + idx + '-' + ev.event_type + '-' + ev.operator_id">
+            <div class="rounded-lg border p-3 transition"
+                 :class="severityClasses(ev.event_type)">
+              <div class="flex items-start justify-between gap-2 mb-1.5">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider"
+                        :class="chipClasses(ev.event_type)"
+                        x-text="ev.event_type"></span>
+                  <span class="text-xs text-gray-300 num-mono" x-text="ev.operator_id"></span>
+                </div>
+                <span class="text-[10px] text-gray-500 num-mono" x-text="'step ' + ev.step_number"></span>
+              </div>
+              <p class="text-sm text-gray-200 leading-snug" x-text="ev.explanation || '(no explanation)'"></p>
+              <div class="mt-2 h-1 rounded-full bg-ink-700 overflow-hidden">
+                <div class="h-full"
+                     :class="severityFillClass(ev.event_type)"
+                     :style="`width: ${Math.round((ev.severity || 0) * 100)}%`"></div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </section>
+    </div>
+
+    <!-- ── Bottom panel: reward components ─────────────────────── -->
+    <section class="bg-ink-900 border border-ink-700 rounded-2xl p-6">
+      <header class="flex items-baseline justify-between mb-5">
+        <div>
+          <h2 class="text-base font-semibold text-white">Reward components</h2>
+          <p class="text-xs text-gray-500 mt-1">Per-step contribution from each reward bucket on a [-1, +1] scale.</p>
+        </div>
+        <div class="text-right">
+          <div class="text-xs uppercase tracking-wider text-gray-500">Total</div>
+          <div class="flex items-baseline gap-2 justify-end">
+            <span class="text-3xl font-bold num-mono"
+                  :class="totalReward() >= 0 ? 'text-emerald-300' : 'text-rose-300'"
+                  x-text="(totalReward() >= 0 ? '+' : '') + totalReward().toFixed(3)"></span>
+            <span class="text-lg" x-text="trendArrow()"
+                  :class="trendClass()"></span>
+          </div>
+        </div>
+      </header>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <template x-for="comp in rewardComponentsView()" :key="comp.key">
+          <div class="rounded-xl border border-ink-700 bg-ink-800/60 p-4">
+            <div class="flex items-baseline justify-between mb-2">
+              <span class="text-xs uppercase tracking-wider text-gray-500" x-text="comp.label"></span>
+              <span class="text-base font-semibold num-mono"
+                    :class="comp.value >= 0 ? 'text-emerald-300' : 'text-rose-300'"
+                    x-text="(comp.value >= 0 ? '+' : '') + comp.value.toFixed(3)"></span>
+            </div>
+            <div class="relative h-2 rounded-full bg-ink-700 overflow-hidden">
+              <div class="absolute inset-y-0 left-1/2 w-px bg-ink-600"></div>
+              <div class="absolute inset-y-0 reward-bar"
+                   :class="comp.value >= 0 ? 'bg-emerald-400' : 'bg-rose-400'"
+                   :style="rewardBarStyle(comp.value)"></div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </section>
+
+    <!-- ── Round-by-round timeline ──────────────────────────────── -->
+    <section class="space-y-3">
+      <header class="flex items-baseline justify-between">
+        <h2 class="text-base font-semibold text-white">Round-by-round timeline</h2>
+        <span class="text-xs text-gray-500" x-text="timeline.length + ' rounds'"></span>
+      </header>
+      <div class="flex gap-3 overflow-x-auto scrollbar-thin pb-3 -mx-2 px-2">
+        <template x-if="!timeline.length">
+          <div class="text-sm text-gray-600 italic w-full text-center py-8">no rounds yet — click Start episode</div>
+        </template>
+        <template x-for="(card, idx) in timeline" :key="card.round_index">
+          <div class="min-w-[220px] rounded-xl border p-3 transition"
+               :class="idx === timeline.length - 1
+                          ? 'border-accent/60 bg-accent/10'
+                          : 'border-ink-700 bg-ink-800/60'">
+            <div class="flex items-baseline justify-between mb-2">
+              <span class="text-xs uppercase tracking-wider text-gray-500">Round</span>
+              <span class="text-lg font-bold text-white num-mono" x-text="card.round_index"></span>
+            </div>
+            <div class="text-xs text-gray-400 mb-1">agent</div>
+            <div class="text-sm text-white num-mono mb-2" x-text="card.agent_action_summary"></div>
+            <div class="text-xs text-gray-400 mb-1">competitors</div>
+            <div class="text-sm text-gray-300 num-mono mb-2" x-text="card.competitor_summary"></div>
+            <div class="flex items-baseline justify-between pt-2 border-t border-ink-700">
+              <span class="text-xs text-gray-500">reward</span>
+              <span class="text-sm font-semibold num-mono"
+                    :class="card.reward >= 0 ? 'text-emerald-300' : 'text-rose-300'"
+                    x-text="(card.reward >= 0 ? '+' : '') + card.reward.toFixed(3)"></span>
+            </div>
+          </div>
+        </template>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="border-t border-ink-700 mt-8">
+    <div class="max-w-[1600px] mx-auto px-8 py-4 text-xs text-gray-500 flex items-center justify-between">
+      <span>OpenEnv-compatible · multi-agent RL with structured oversight</span>
+      <span class="num-mono">poll: 1.5s</span>
+    </div>
+  </footer>
+</div>
+
+<script>
+function visualizer() {
+  return {
+    snapshot: { status: 'idle' },
+    task: 'auction',
+    mode: 'baseline',
+    timeline: [],
+    prevTotal: 0,
+    running: false,
+    initialBudget: 100,
+    pollTimer: null,
+
+    init() {
+      this.poll();
+      this.pollTimer = setInterval(() => this.poll(), 1500);
+    },
+
+    async poll() {
+      try {
+        const r = await fetch('/api/episode_state');
+        if (!r.ok) return;
+        const data = await r.json();
+        // Snapshot the previous total *before* swapping in the new snapshot,
+        // so trendArrow() can compare against the prior frame.
+        const oldTotal = (this.snapshot && this.snapshot.last_step_rewards
+                          && typeof this.snapshot.last_step_rewards.total === 'number')
+                          ? this.snapshot.last_step_rewards.total : 0;
+        this.snapshot = data;
+        this.prevTotal = oldTotal;
+        if (data.status !== 'idle') {
+          this.appendTimeline(data);
+        }
+      } catch (_) { /* network error — keep last snapshot */ }
+    },
+
+    appendTimeline(snap) {
+      const idx = snap.round_index || 0;
+      if (!idx) return;
+      if (this.timeline.length && this.timeline[this.timeline.length - 1].round_index === idx) return;
+      const agent = snap.agent || {};
+      const action = agent.last_action || {};
+      let summary = '—';
+      if (action.bid_amount !== null && action.bid_amount !== undefined) summary = 'bid ' + Number(action.bid_amount).toFixed(2);
+      else if (action.dispute_choice) summary = action.dispute_choice;
+      else if (action.cooperation_flag) summary = action.cooperation_flag;
+      const compSummary = (snap.competitors || [])
+        .map(c => c.bid_history.length ? Number(c.bid_history[c.bid_history.length - 1]).toFixed(2) : '—')
+        .join(' · ') || '—';
+      this.timeline.push({
+        round_index: idx,
+        agent_action_summary: summary,
+        competitor_summary: compSummary,
+        reward: (snap.last_step_rewards && typeof snap.last_step_rewards.total === 'number') ? snap.last_step_rewards.total : 0,
+      });
+    },
+
+    async startEpisode() {
+      if (this.running) return;
+      this.running = true;
+      this.timeline = [];
+      this.prevTotal = 0;
+      const seed = Math.floor(Math.random() * 200);
+      try {
+        const r = await fetch('/api/start_episode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ task_name: this.task, seed }),
+        });
+        if (!r.ok) { this.running = false; return; }
+        const meta = await r.json();
+        // Drive the episode with a trivial scripted action until done.
+        for (let i = 0; i < (meta.total_rounds || 12) + 2; i++) {
+          await new Promise(res => setTimeout(res, 800));
+          const stepRes = await fetch('/api/run_step', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(this.trivialActionFor(this.task)),
+          });
+          if (!stepRes.ok) break;
+          const stepObs = await stepRes.json();
+          if (stepObs.done) break;
+        }
+      } finally {
+        this.running = false;
+      }
+    },
+
+    trivialActionFor(task) {
+      if (task === 'auction')   return { bid_amount: 12.0, justification: 'baseline demo: small fixed bid' };
+      if (task === 'dispute')   return { dispute_choice: 'negotiate', justification: 'baseline demo: always negotiate' };
+      if (task === 'coalition') return { cooperation_flag: 'cooperate', justification: 'baseline demo: always cooperate' };
+      return { justification: 'baseline demo' };
+    },
+
+    taskHelpText() {
+      const t = this.snapshot.task_name;
+      if (t === 'auction')   return 'sealed-bid auction with partial observability';
+      if (t === 'dispute')   return 'dispute resolution game';
+      if (t === 'coalition') return 'iterated coalition with reputation tracking';
+      return '';
+    },
+
+    budgetPct() {
+      const b = (this.snapshot.agent && this.snapshot.agent.remaining_budget) || 0;
+      const max = this.initialBudget || 100;
+      return Math.max(0, Math.min(100, (b / max) * 100));
+    },
+
+    reputationPct() {
+      const r = (this.snapshot.agent && this.snapshot.agent.reputation) || 0;
+      return Math.max(0, Math.min(100, r * 100));
+    },
+
+    reputationColor() {
+      const r = (this.snapshot.agent && this.snapshot.agent.reputation) || 0;
+      if (r >= 0.66) return '#34d399';
+      if (r >= 0.33) return '#fbbf24';
+      return '#f87171';
+    },
+
+    competitorBarHeight(comp, b) {
+      const max = Math.max(...comp.bid_history.map(x => Number(x) || 0), 1);
+      const v = Number(b) || 0;
+      return Math.max(6, (v / max) * 100);
+    },
+
+    severityClasses(eventType) {
+      switch (eventType) {
+        case 'warning':           return 'border-yellow-500/40 bg-yellow-500/5';
+        case 'violation':         return 'border-rose-500/40 bg-rose-500/5';
+        case 'commendation':      return 'border-emerald-500/40 bg-emerald-500/5';
+        case 'audit_triggered':   return 'border-purple-500/40 bg-purple-500/5';
+        case 'reputation_update': return 'border-gray-500/40 bg-gray-500/5';
+        default:                  return 'border-ink-700 bg-ink-800/60';
+      }
+    },
+    chipClasses(eventType) {
+      switch (eventType) {
+        case 'warning':           return 'bg-yellow-500/20 text-yellow-200 border border-yellow-500/40';
+        case 'violation':         return 'bg-rose-500/20 text-rose-200 border border-rose-500/40';
+        case 'commendation':      return 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/40';
+        case 'audit_triggered':   return 'bg-purple-500/20 text-purple-200 border border-purple-500/40';
+        case 'reputation_update': return 'bg-gray-500/20 text-gray-300 border border-gray-500/40';
+        default:                  return 'bg-ink-700 text-gray-300 border border-ink-700';
+      }
+    },
+    severityFillClass(eventType) {
+      switch (eventType) {
+        case 'warning':           return 'bg-yellow-400';
+        case 'violation':         return 'bg-rose-400';
+        case 'commendation':      return 'bg-emerald-400';
+        case 'audit_triggered':   return 'bg-purple-400';
+        case 'reputation_update': return 'bg-gray-400';
+        default:                  return 'bg-gray-500';
+      }
+    },
+
+    rewardComponentsView() {
+      const r = this.snapshot.last_step_rewards || {};
+      return [
+        { key: 'revenue',       label: 'Revenue',       value: Number(r.revenue) || 0 },
+        { key: 'interference',  label: 'Interference',  value: Number(r.interference) || 0 },
+        { key: 'compliance',    label: 'Compliance',    value: Number(r.compliance) || 0 },
+        { key: 'justification', label: 'Justification', value: Number(r.justification) || 0 },
+      ];
+    },
+    rewardBarStyle(v) {
+      const clamped = Math.max(-1, Math.min(1, v));
+      const half = Math.abs(clamped) * 50;
+      if (clamped >= 0) return `left: 50%; width: ${half}%;`;
+      return `right: 50%; width: ${half}%;`;
+    },
+    totalReward() {
+      const r = this.snapshot.last_step_rewards;
+      return r && typeof r.total === 'number' ? r.total : 0;
+    },
+    trendArrow() {
+      const t = this.totalReward();
+      if (t > this.prevTotal + 1e-6) return '▲';
+      if (t < this.prevTotal - 1e-6) return '▼';
+      return '—';
+    },
+    trendClass() {
+      const t = this.totalReward();
+      if (t > this.prevTotal + 1e-6) return 'text-emerald-400';
+      if (t < this.prevTotal - 1e-6) return 'text-rose-400';
+      return 'text-gray-500';
+    },
+  };
+}
+
+// Cache previous total before each Alpine render so trend arrow is computed
+// against the prior snapshot.
+document.addEventListener('alpine:initialized', () => {
+  // no-op; trend tracking handled inside the component via prevTotal updates below
+});
+</script>
+
+</body>
+</html>

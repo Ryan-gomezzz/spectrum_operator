@@ -49,6 +49,7 @@ pinned: false
 | [Tasks](#tasks) | All 8 tasks (5 Round 1 + 3 Round 2) |
 | [Reward function](#reward-function) | 4 components, process bonuses, anti-hacking |
 | [Quick start](#quick-start) | Docker, local dev, `inference.py`, Python client |
+| [Visualization](#visualization) | Live demo SPA at `/visualize` |
 | [Oversight endpoint](#oversight-endpoint) | `GET /oversight` for the demo |
 | [Submission & validation hints](#submission--validation-hints) | URLs, env vars, logs |
 | [Baseline scores](#baseline-scores) | Placeholder table for Round 2 results |
@@ -70,6 +71,18 @@ Round 2 reframes the environment as a **multi-agent training ground** with a fir
 | Memorises a fixed opponent slot | Deterministic seed-keyed rotation breaks the shortcut |
 
 Scalable oversight, theory-of-mind inference, and coalition formation are the three research axes this environment was built to expose. Every regulator decision appears in a structured `OversightEvent` log accessible over HTTP — the demo renders it live.
+
+---
+
+## Visualization
+
+### Live visualization
+
+Open the deployed Space at /visualize for a live multi-agent episode visualization. The page shows the learned agent's state, competitor bid histories, regulator oversight events, and per-component rewards in real time as an episode unfolds.
+
+URL: https://ren9087-rf-spectrum-env-v2.hf.space/visualize
+
+Demo: pick "auction" from the task selector, click "Start episode" — the page polls the environment every 1.5 seconds and renders the multi-agent dynamics including the structured oversight log emitted by the regulator (the scalable-oversight audit trail).
 
 ---
 
@@ -422,6 +435,74 @@ rf_spectrum_env/
 ```
 
 </details>
+
+---
+
+## Training pipeline (Round 2)
+
+A reproducible Colab notebook lives at [`training/grpo_multiagent.ipynb`](training/grpo_multiagent.ipynb).
+It uses HF TRL's GRPOTrainer to fine-tune `Qwen/Qwen2.5-0.5B-Instruct` against
+the three Round 2 multi-agent tasks (`auction` / `dispute` / `coalition`)
+using a single-step training formulation: each prompt is one observation,
+and the four reward functions reset the env on the prompt's seed, take
+one step with the model's parsed action, and read back per-component
+rewards from `observation.metadata["reward_components"]`. Held-out eval
+seeds 200–229 are kept disjoint from training seeds 0–199.
+
+The notebook runs the env **in-process** rather than over HTTP. OpenEnv's
+HTTP server creates a fresh environment per request (its `_env_factory`
+is called on every `/reset` and `/step` independently), so multi-round
+games cannot persist state across HTTP calls — only the WebSocket
+session path keeps state, and an in-process import sidesteps that
+complication entirely.
+
+### What the notebook produces (committed to repo)
+
+After running top-to-bottom on a Colab T4, the notebook commits these
+artifacts under [`training/plots/`](training/plots/):
+
+| File | What it shows |
+|:-----|:--------------|
+| `{TASK}_loss.png` | Training loss curve |
+| `{TASK}_rewards.png` | All four reward components (revenue, interference, compliance, justification) on shared axes |
+| `{TASK}_baseline_vs_trained.png` | Held-out eval (seeds 200–229): rule-based baseline vs GRPO-trained policy on the same chart |
+| `{TASK}_eval.json` | Raw per-seed numbers backing the comparison |
+| `{TASK}_log.csv` | Full TRL log history dump |
+
+### Reproducing
+
+1. Set Colab secrets `HF_TOKEN` (optional — only for HF Hub push) and
+   `WANDB_API_KEY` (optional — falls back to offline mode).
+2. Open [`training/grpo_multiagent.ipynb`](training/grpo_multiagent.ipynb) in Colab.
+3. Run **Cell 1** (pinned install: `transformers==4.48.3`, `trl==0.14.0`,
+   `peft==0.13.2`, `accelerate==1.0.1`, `bitsandbytes==0.46.1`,
+   `triton==3.1.0`, `tf-keras` shim, `matplotlib`, `pandas`).
+4. **Restart runtime** (Runtime → Restart session). This is mandatory:
+   Colab caches its pre-installed transformers/trl/vllm versions and
+   they conflict with the pinned stack on first import.
+5. Run cells 2 → end. Default config: `TASK="auction"`, `USE_4BIT=False`
+   (fp16 — fits T4 in ~3 GB peak VRAM and avoids the bitsandbytes/triton
+   churn), `MAX_TRAIN_STEPS=100`.
+
+Cells include a hard env-contract sanity check (Cell 6), per-component
+reward sanity print (Cell 9), generation inspection during training
+(Cell 13 prints raw justifications from held-out seeds — primary
+reward-hacking detector), and post-save reload verification (Cell 16).
+
+### Held-out evaluation outside the notebook
+
+A standalone evaluator runs the same comparison from the terminal:
+
+```bash
+# Trained checkpoint (the LoRA dir saved by the notebook):
+python scripts/evaluate.py --checkpoint rf-spectrum-auction-trained
+
+# Rule-based fallback (no model):
+python scripts/evaluate.py --rule-based
+```
+
+It prints the baseline → trained delta-% table for all three Round 2
+tasks plus a per-component breakdown for `auction`.
 
 ---
 
