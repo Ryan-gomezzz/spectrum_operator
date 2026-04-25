@@ -30,7 +30,7 @@ pinned: false
 | **Domain** | Multi-agent games with a reputation-tracking regulator (telecom substrate) |
 | **API** | `reset()` · `step(action)` · `state` · `get_oversight_log()` (OpenEnv) |
 | **Tasks** | **5 Round 1** (single-agent) · **3 NEW multi-agent**: auction · dispute · coalition |
-| **Reward** | 4 components summing to 1.0: revenue (0.35) · interference (0.20) · compliance (0.25) · justification (0.20) |
+| **Reward** | 4 components summing to 1.0: revenue (0.45) · justification (0.40) · compliance (0.10) · interference (0.05) |
 
 <sub>OpenEnv manifest: [`openenv.yaml`](openenv.yaml) · Env name: `rf_spectrum_env` · Design spec: [`docs/multi_agent_design.md`](docs/multi_agent_design.md)</sub>
 
@@ -247,10 +247,10 @@ Round 2 rewards are a weighted sum of four independent components. Weights are d
 
 | Component | Weight | Signal |
 |:----------|:------:|:-------|
-| `revenue` | **0.35** | Distance from the ground-truth reference bid / payoff. Peaks at the reference; heavy over-bids return negative |
-| `interference` | **0.20** | Sum of regulator `VIOLATION` / `WARNING` severities emitted this step, clipped to `[-1, 0]` |
-| `compliance` | **0.25** | Positive when the regulator emitted only `COMMENDATION` / `AUDIT_TRIGGERED` / `REPUTATION_UPDATE` events; negative proportional to max violation severity |
-| `justification` | **0.20** | Keyword rubric (up to 0.90) + competitor-number-reference bonus (+0.05) + budget-reference bonus (+0.05); capped at 1.0 |
+| `revenue` | **0.45** | Distance from the ground-truth reference bid / payoff. Peaks at the reference; heavy over-bids return negative |
+| `justification` | **0.40** | Keyword rubric (up to 0.90) + competitor-number-reference bonus (+0.05) + budget-reference bonus (+0.05); capped at 1.0 |
+| `compliance` | **0.10** | Positive when the regulator emitted only `COMMENDATION` / `AUDIT_TRIGGERED` / `REPUTATION_UPDATE` events; negative proportional to max violation severity |
+| `interference` | **0.05** | Sum of regulator `VIOLATION` / `WARNING` severities emitted this step, clipped to `[-1, 0]` |
 
 ### Process-aware bonuses
 
@@ -386,18 +386,18 @@ The demo renders these events as a live audit trail during the pitch — it is t
 
 ## Baseline scores
 
-To be filled after training.
+Round 2 rule-based baselines from [`baselines.json`](baselines.json) (10 episodes × all-seed sweep, seeds 0–9). GRPO-trained columns will be filled in from the W&B run before submission.
 
-| Task | Round | Episodes × steps | Rule-based baseline | LLM baseline | RL baseline |
-|:-----|:-----:|:----------------:|:-------------------:|:------------:|:-----------:|
-| easy | 1 | 3 × 5 | — | ~0.70 | TBD |
-| medium | 1 | 3 × 8 | — | ~0.50 | TBD |
-| disaster_response | 1 | 3 × 10 | — | ~0.35 | TBD |
-| hard | 1 | 3 × 12 | — | ~0.30 | TBD |
-| spectrum_auction | 1 | 3 × 8 | — | ~0.25 | TBD |
-| **auction** 🆕 | **2** | 3 × 6 | TBD | TBD | TBD |
-| **dispute** 🆕 | **2** | 3 × 4 | TBD | TBD | TBD |
-| **coalition** 🆕 | **2** | 3 × 6 | TBD | TBD | TBD |
+| Task | Round | Episodes × steps | Rule-based baseline | GRPO-trained |
+|:-----|:-----:|:----------------:|:-------------------:|:------------:|
+| easy | 1 | 3 × 5 | — | — |
+| medium | 1 | 3 × 8 | — | — |
+| disaster_response | 1 | 3 × 10 | — | — |
+| hard | 1 | 3 × 12 | — | — |
+| spectrum_auction | 1 | 3 × 8 | — | — |
+| **auction** 🆕 | **2** | 10 × 6 | **0.1374** | `[TRAINED_REWARD]` |
+| **dispute** 🆕 | **2** | 10 × 4 | **0.1400** | `[TRAINED_REWARD]` |
+| **coalition** 🆕 | **2** | 10 × 6 | **0.1175** | `[TRAINED_REWARD]` |
 
 *(Round 1 numbers drift with HF provider routing; reproducibility is best-effort at the LLM layer.)*
 
@@ -440,58 +440,29 @@ rf_spectrum_env/
 
 ## Training pipeline (Round 2)
 
-A reproducible Colab notebook lives at [`training/grpo_multiagent.ipynb`](training/grpo_multiagent.ipynb).
-It uses HF TRL's GRPOTrainer to fine-tune `Qwen/Qwen2.5-0.5B-Instruct` against
-the three Round 2 multi-agent tasks (`auction` / `dispute` / `coalition`)
-using a single-step training formulation: each prompt is one observation,
-and the four reward functions reset the env on the prompt's seed, take
-one step with the model's parsed action, and read back per-component
-rewards from `observation.metadata["reward_components"]`. Held-out eval
-seeds 200–229 are kept disjoint from training seeds 0–199.
+We trained `Qwen/Qwen2.5-0.5B-Instruct` with HF TRL's `GRPOTrainer` on the
+three Round 2 multi-agent tasks (`auction` / `dispute` / `coalition`) using
+a single-step training formulation: each prompt is one observation, and the
+four reward functions reset the env on the prompt's seed, take one step
+with the model's parsed action, and read back per-component rewards from
+`observation.metadata["reward_components"]`. Held-out eval seeds 200–229
+are kept disjoint from training seeds 0–199.
 
-The notebook runs the env **in-process** rather than over HTTP. OpenEnv's
-HTTP server creates a fresh environment per request (its `_env_factory`
-is called on every `/reset` and `/step` independently), so multi-round
-games cannot persist state across HTTP calls — only the WebSocket
-session path keeps state, and an in-process import sidesteps that
-complication entirely.
+**Stack:** TRL `GRPOTrainer` + PEFT (LoRA r=8, α=16, targets `q_proj` /
+`k_proj` / `v_proj` / `o_proj`) on a single Colab T4. Training runs
+in-process against `SpectrumEnvironment` rather than over HTTP — OpenEnv's
+HTTP server creates a fresh env per request, so multi-round games can't
+persist state across `/reset` + `/step` calls.
 
-### What the notebook produces (committed to repo)
+> **Note:** the reproducible Colab notebook is being polished by a teammate
+> and will land at `training/grpo_multiagent.ipynb` shortly. Training plots
+> live under [`training/plots/`](training/plots/) once the notebook runs:
+> `{TASK}_loss.png`, `{TASK}_rewards.png`, `{TASK}_baseline_vs_trained.png`,
+> `{TASK}_eval.json`, `{TASK}_log.csv`.
 
-After running top-to-bottom on a Colab T4, the notebook commits these
-artifacts under [`training/plots/`](training/plots/):
+### Held-out evaluation from the terminal
 
-| File | What it shows |
-|:-----|:--------------|
-| `{TASK}_loss.png` | Training loss curve |
-| `{TASK}_rewards.png` | All four reward components (revenue, interference, compliance, justification) on shared axes |
-| `{TASK}_baseline_vs_trained.png` | Held-out eval (seeds 200–229): rule-based baseline vs GRPO-trained policy on the same chart |
-| `{TASK}_eval.json` | Raw per-seed numbers backing the comparison |
-| `{TASK}_log.csv` | Full TRL log history dump |
-
-### Reproducing
-
-1. Set Colab secrets `HF_TOKEN` (optional — only for HF Hub push) and
-   `WANDB_API_KEY` (optional — falls back to offline mode).
-2. Open [`training/grpo_multiagent.ipynb`](training/grpo_multiagent.ipynb) in Colab.
-3. Run **Cell 1** (pinned install: `transformers==4.48.3`, `trl==0.14.0`,
-   `peft==0.13.2`, `accelerate==1.0.1`, `bitsandbytes==0.46.1`,
-   `triton==3.1.0`, `tf-keras` shim, `matplotlib`, `pandas`).
-4. **Restart runtime** (Runtime → Restart session). This is mandatory:
-   Colab caches its pre-installed transformers/trl/vllm versions and
-   they conflict with the pinned stack on first import.
-5. Run cells 2 → end. Default config: `TASK="auction"`, `USE_4BIT=False`
-   (fp16 — fits T4 in ~3 GB peak VRAM and avoids the bitsandbytes/triton
-   churn), `MAX_TRAIN_STEPS=100`.
-
-Cells include a hard env-contract sanity check (Cell 6), per-component
-reward sanity print (Cell 9), generation inspection during training
-(Cell 13 prints raw justifications from held-out seeds — primary
-reward-hacking detector), and post-save reload verification (Cell 16).
-
-### Held-out evaluation outside the notebook
-
-A standalone evaluator runs the same comparison from the terminal:
+A standalone evaluator runs the same baseline-vs-trained comparison:
 
 ```bash
 # Trained checkpoint (the LoRA dir saved by the notebook):
