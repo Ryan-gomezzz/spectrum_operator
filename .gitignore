@@ -36,6 +36,11 @@ Thumbs.db
 training-artifacts-*.zip
 rf-spectrum-*-trained/
 rf-spectrum-*-lora/
+rf-spectrum-smoke-*/
+
+# Eval JSON dumps from scripts/evaluate.py --save-json (commit only the
+# canonical baselines.json; keep ad-hoc dumps out of git)
+eval_*.json
 
 # Wandb local cache (we link the remote run URL in the README instead)
 wandb/
