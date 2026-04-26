@@ -104,9 +104,6 @@ Full self-play where we drop the scripted bots and let trained agents play again
 
 ## Links
 - [Live Demo](https://ren9087-rf-spectrum-env-v2.hf.space/visualize)
-
-  (Note: the live demo runs on varied seeds which means that the results differ per run. The evaluation numbers above are averaged over 10 held-out episodes for consistency.)
-  
 - [HF Space](https://huggingface.co/spaces/ren9087/rf-spectrum-env-v2)
 - [GitHub](https://github.com/Ryan-gomezzz/spectrum_operator)
 - [Trained Model](https://huggingface.co/ren9087/rf-spectrum-auction-trained)
