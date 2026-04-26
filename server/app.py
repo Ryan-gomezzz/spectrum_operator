@@ -402,10 +402,59 @@ async def api_episode_state() -> dict:
         return {"status": "idle"}
 
     learner = env._operator_states.get("op-0")
-    competitors = [
-        {"slot": i + 1, "bid_history": list(hist)}
-        for i, hist in enumerate(env._competitor_bid_history)
-    ]
+
+    # Build per-competitor entries that surface ALL action types, not just
+    # bids. Each competitor's full action history lives on its OperatorState
+    # (populated round-by-round in spectrum_environment._step_multi_agent),
+    # so we can render dispute and coalition choices in the same panel that
+    # currently shows the auction bid bars. The `bid_history` field is
+    # preserved unchanged for the auction bar-chart code path.
+    competitors = []
+    for i in range(1, 1 + len(env._competitor_policies)):
+        op_id = f"op-{i}"
+        op_state = env._operator_states.get(op_id)
+        bid_history = (
+            list(env._competitor_bid_history[i - 1])
+            if i - 1 < len(env._competitor_bid_history)
+            else []
+        )
+        def _enum_value(v):
+            # The str-enums round-trip through model_dump() as enum instances,
+            # whose default str() is the full "DisputeChoice.NEGOTIATE" repr;
+            # we want the lowercase value string ("negotiate") for the UI.
+            if hasattr(v, "value"):
+                return str(v.value)
+            s = str(v)
+            return s.rsplit(".", 1)[-1].lower() if "." in s else s
+
+        action_history: list[dict] = []
+        if op_state is not None:
+            for round_idx, act in enumerate(op_state.action_history):
+                if act.get("bid_amount") is not None:
+                    action_history.append({
+                        "round": round_idx,
+                        "type": "bid",
+                        "value": float(act["bid_amount"]),
+                    })
+                elif act.get("dispute_choice") is not None:
+                    action_history.append({
+                        "round": round_idx,
+                        "type": "dispute",
+                        "value": _enum_value(act["dispute_choice"]),
+                    })
+                elif act.get("cooperation_flag") is not None:
+                    action_history.append({
+                        "round": round_idx,
+                        "type": "coalition",
+                        "value": _enum_value(act["cooperation_flag"]),
+                    })
+        competitors.append({
+            "slot": i,
+            "task": env._task_name,
+            "bid_history": bid_history,
+            "action_history": action_history,
+            "latest_action": action_history[-1] if action_history else None,
+        })
 
     last_components = env._multi_round_rewards[-1] if env._multi_round_rewards else {}
     last_total = env._step_rewards[-1] if env._step_rewards else 0.0
