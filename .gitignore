@@ -1,5 +1,7 @@
 # Internal team docs (not for submission / not for reviewers)
 docs/project_explainer.md
+docs/colab.md
+docs/HF.md
 
 # Python
 __pycache__/
