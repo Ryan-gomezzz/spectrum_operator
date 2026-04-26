@@ -44,6 +44,7 @@ pinned: false
 | 🧠 **Trained model** | [huggingface.co/ren9087/rf-spectrum-auction-trained](https://huggingface.co/ren9087/rf-spectrum-auction-trained) |
 | 📖 **API docs** | [ren9087-rf-spectrum-env-v2.hf.space/docs](https://ren9087-rf-spectrum-env-v2.hf.space/docs) |
 | 📊 **Slide deck** | [Google Slides](https://docs.google.com/presentation/d/1cRejKbS5YqmxirWOb1Nl5nOr2dquu4ld/edit?usp=sharing&ouid=107453993982747998827&rtpof=true&sd=true) |
+| 🎥 **Demo video** | [YouTube](https://youtu.be/bYnTYGnRPto) |
 
 </div>
 
@@ -408,9 +409,9 @@ Round 2 rule-based baselines from [`baselines.json`](baselines.json) (10 episode
 | disaster_response | 1 | 3 × 10 | — | — |
 | hard | 1 | 3 × 12 | — | — |
 | spectrum_auction | 1 | 3 × 8 | — | — |
-| **auction** 🆕 | **2** | 10 × 6 | **0.1374** | `[TRAINED_REWARD]` |
-| **dispute** 🆕 | **2** | 10 × 4 | **0.1400** | `[TRAINED_REWARD]` |
-| **coalition** 🆕 | **2** | 10 × 6 | **0.1175** | `[TRAINED_REWARD]` |
+| **auction** 🆕 | **2** | 10 × 6 | **0.1374** | **0.3815 (+54.3%)** |
+| **dispute** 🆕 | **2** | 10 × 4 | **0.1400** | **0.1100 (0%)** |
+| **coalition** 🆕 | **2** | 10 × 6 | **0.1175** | **0.1200 (+11%)** |
 
 *(Round 1 numbers drift with HF provider routing; reproducibility is best-effort at the LLM layer.)*
 
@@ -472,6 +473,14 @@ persist state across `/reset` + `/step` calls.
 > live under [`training/plots/`](training/plots/) once the notebook runs:
 > `{TASK}_loss.png`, `{TASK}_rewards.png`, `{TASK}_baseline_vs_trained.png`,
 > `{TASK}_eval.json`, `{TASK}_log.csv`.
+
+### Training results
+
+<img src="reward_curves.png" width="600">
+
+<img src="loss_plot.png" width="600">
+
+For a full writeup, see the [blog post](blog.md).
 
 ### Held-out evaluation from the terminal
 
