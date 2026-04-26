@@ -95,10 +95,14 @@ Loss increased from near-zero to 0.006, confirming active learning throughout th
 
 ## The referee and Scalable Oversight
 Every single decision the referee makes is logged as a structured event: a warning, a violation, a commendation. Anyone can pull up this log and check what happened and why. We call this a step towards scalable oversight, which is a structured audit trail that a simpler system could verify.
-**WARNING**: "You bid 90% of your budget and that's risky"
-**VIOLATION**: "You caused interference on a protected channel"
-**COMMENDATION**: "You cooperated during the emergency"
-**REPUTATION_UPDATE**: "Your reputation went from 0.5 to 0.55"
+
+>**WARNING**: "You bid 90% of your budget and that's risky"
+
+>**VIOLATION**: "You caused interference on a protected channel"
+
+>**COMMENDATION**: "You cooperated during the emergency"
+
+>**REPUTATION_UPDATE**: "Your reputation went from 0.5 to 0.55"
 
 ## Why does this matter? Who would care and why?
 Right now, AI agents are starting to get deployed in real-world negotiations where they are bidding on ad space, managing cloud resources, allocating bandwidth etc, But here's the problem: how do you know the AI is playing fair?
