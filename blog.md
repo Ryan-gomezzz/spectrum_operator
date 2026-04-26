@@ -43,16 +43,26 @@ Every decision gets scored on four things, like a report card:
 
 The justification score is the anti-cheating system. Our system checks if the AI mentions specific numbers that only appear in the current game state. If it does, it gets bonus points. If it writes fancy-sounding nonsense, a secondary AI judge catches it 10% of the time and slashes the score.
 
+
 ## Results after training
-Task:Auction
-After 150 training steps, the auction agent improved by 54.3%. It went from a score of 0.25 to 0.38. The biggest change was in justification.It went from 0.05 to 0.30. The agent learned to actually explain its reasoning using real game data. Even more interesting, compliance flipped from -0.14 to +0.16. The agent literally went from breaking rules to following them.
+
+| Task | Baseline | Trained | Delta |
+|------|----------|---------|-------|
+| Auction | 0.25 | 0.38 | **+54.3%** |
+| Coalition | 0.11 | 0.12 | **+11%** |
+| Dispute | 0.11 | 0.11 | 0% |
+
+**Per-component breakdown (Auction):**
+
 | Component | Baseline | Trained | Change |
 |-----------|----------|---------|--------|
-| Overall | 0.25 | 0.38 | +54.3% |
 | Revenue | 0.61 | 0.59 | -0.02 |
 | Interference | -0.69 | -0.44 | +0.25 |
 | Compliance | -0.14 | +0.16 | +0.30 |
 | Justification | 0.05 | 0.30 | +0.25 |
+
+
+After 150 training steps, the auction agent improved by 54.3%. It went from a score of 0.25 to 0.38. The biggest change was in justification.It went from 0.05 to 0.30. The agent learned to actually explain its reasoning using real game data. Even more interesting, compliance flipped from -0.14 to +0.16. The agent literally went from breaking rules to following them.
 
 Our first training run with 50 GRPO steps. The model showed a 10.6% improvement, with justification improving from 0.05 to 0.125. This confirmed the training pipeline was working and rewards were flowing correctly.
 
