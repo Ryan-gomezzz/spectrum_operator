@@ -8,7 +8,7 @@ You are one of three telecom companies(like JIO, Airtel or Vodafone) competing f
 We started Round 1 simple: you're the only player. Requests come in like "Jio wants a frequency for LTE" and you decide which channel to give them, at what power level, and explain why. It's like being a traffic controller but for invisible radio waves instead of cars.
 
 ## Round 2
-Round 2 made it a real game. Multiplayer.
+Round 2 made it a real game. Three players: one learned agent and two scripted opponents with hidden personalities. The scripted opponents create genuine strategic pressure without the engineering complexity of simultaneous multi-policy training.
 
 ## The three tasks:
 
@@ -67,11 +67,16 @@ The justification score is the anti-cheating system. Our system checks if the AI
 
 The auction task had the richest reward signal across all four components, making it the strongest learner. Coalition showed modest gains at +11%. Dispute's reward signal was too sparse for 50 training steps with a 0.5B model. A larger model or more steps would likely show similar improvement.
 
-After 150 training steps, the auction agent improved by 54.3%. It went from a score of 0.25 to 0.38. The biggest change was in justification.It went from 0.05 to 0.30. The agent learned to actually explain its reasoning using real game data. Even more interesting, compliance flipped from -0.14 to +0.16. The agent literally went from breaking rules to following them.
+After 150 training steps, the auction agent improved by 54.3%. It went from a score of 0.25 to 0.38. The Revenue stayed roughly flat and the improvement came from compliance and justification.
+The model learned to follow rules (compliance flipped from -0.14 to +0.16) and to explain its decisions by referencing actual game state (justification went from 0.05 to 0.30). With more training steps, we expect revenue to climb as well.
 
-Our first training run with 50 GRPO steps. The model showed a 10.6% improvement, with justification improving from 0.05 to 0.125. This confirmed the training pipeline was working and rewards were flowing correctly.
+## Example: Before vs After Training
 
-After scaling to 150 steps, the improvement jumped to 54.3%. Justification went from 0.05 to 0.30.
+Before training, the model outputs generic or empty responses:
+> {"bid_amount": 0.0, "justification": ""}
+
+After 150 steps of GRPO training, the model references actual game state:
+> {"bid_amount": 8.5, "justification": "Bidding conservatively with remaining budget 42.3. Competitor bid 15.0 last round, staying below to preserve budget for later rounds."}
 
 ## Training Curves
 Reward plots
@@ -89,7 +94,7 @@ Loss increased from near-zero to 0.006, confirming active learning throughout th
 
 
 ## The referee and Scalable Oversight
-Every single decision the referee makes is logged as a structured event: a warning, a violation, a commendation. Anyone can pull up this log and check what happened and why. We call this scalable oversight.
+Every single decision the referee makes is logged as a structured event: a warning, a violation, a commendation. Anyone can pull up this log and check what happened and why. We call this a step towards scalable oversight, which is a structured audit trail that a simpler system could verify.
 **WARNING**: "You bid 90% of your budget and that's risky"
 **VIOLATION**: "You caused interference on a protected channel"
 **COMMENDATION**: "You cooperated during the emergency"
