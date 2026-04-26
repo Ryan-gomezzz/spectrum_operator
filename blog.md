@@ -120,7 +120,7 @@ Full self-play where we drop the scripted bots and let trained agents play again
 - [Live Demo](https://ren9087-rf-spectrum-env-v2.hf.space/visualize)
 - [HF Space](https://huggingface.co/spaces/ren9087/rf-spectrum-env-v2)
 - [GitHub](https://github.com/Ryan-gomezzz/spectrum_operator)
-- [Trained Model](https://huggingface.co/ren9087/rf-spectrum-auction-trained)
+- [Auction Trained Model](https://huggingface.co/ren9087/rf-spectrum-auction-trained)
 - [API Docs](https://ren9087-rf-spectrum-env-v2.hf.space/docs)
 - [Colab Link](https://colab.research.google.com/drive/168FsGK-gvJ3Zo47b2ykFC-IzS3Nl_F_F?usp=sharing)
 
