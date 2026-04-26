@@ -54,7 +54,7 @@ The justification score is the anti-cheating system. Our system checks if the AI
 | Task | Baseline | Trained | Delta |
 |------|----------|---------|-------|
 | Auction | 0.25 | 0.38 | **+54.3%** |
-| Coalition | 0.11 | 0.12 | **+11%** |
+| Coalition | 0.11 | 0.12 | **+11.1%** |
 | Dispute | 0.11 | 0.11 | 0% |
 
 All the results averaged over 10 held-out episodes (seeds 200-209).
@@ -67,6 +67,17 @@ All the results averaged over 10 held-out episodes (seeds 200-209).
 | Interference | -0.69 | -0.44 | +0.25 |
 | Compliance | -0.14 | +0.16 | +0.30 |
 | Justification | 0.05 | 0.30 | +0.25 |
+
+**Per-component breakdown (Coalition):**
+
+| Component | Baseline | Trained | Change |
+|-----------|----------|---------|--------|
+| Revenue | 0.00 | 0.00 | 0.00 |
+| Interference | 0.00 | 0.00 | 0.00 |
+| Compliance | 0.45 | 0.50 | +0.05 |
+| Justification | 0.00 | 0.00 | 0.00 |
+
+Coalition improved by 11.1%, with compliance climbing from 0.45 to 0.50. The model learned to cooperate more consistently, earning higher compliance scores from the referee.
 
 The auction task had the richest reward signal across all four components, making it the strongest learner. Coalition showed modest gains at +11%. Dispute's reward signal was too sparse for 50 training steps with a 0.5B model. A larger model or more steps would likely show similar improvement.
 
@@ -96,6 +107,12 @@ Revenue climbed from 0 to 0.8. Justification steadily increased. Overall reward 
 Loss increased from near-zero to 0.006.
 
 <img src="loss_plot.png" width="600">
+
+### Coalition Training Curves
+
+<img src="coalition_curves.png" width="600">
+
+Coalition reward and loss over 100 GRPO steps. Overall reward climbed from 0.26 to 0.34, with loss confirming active learning.
 
 
 ## The referee and Scalable Oversight
