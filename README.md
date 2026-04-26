@@ -34,6 +34,16 @@ pinned: false
 
 <sub>OpenEnv manifest: [`openenv.yaml`](openenv.yaml) · Env name: `rf_spectrum_env` · Design spec: [`docs/multi_agent_design.md`](docs/multi_agent_design.md) · Round 1 submission: [Ryan-gomezzz/rf_spectrum](https://github.com/Ryan-gomezzz/rf_spectrum)</sub>
 
+<br/>
+
+| | |
+|:---|:---|
+| 🌐 **Live demo** | [ren9087-rf-spectrum-env-v2.hf.space/visualize](https://ren9087-rf-spectrum-env-v2.hf.space/visualize) |
+| 🤗 **HF Space** | [huggingface.co/spaces/ren9087/rf-spectrum-env-v2](https://huggingface.co/spaces/ren9087/rf-spectrum-env-v2) |
+| 💻 **GitHub** | [github.com/Ryan-gomezzz/spectrum_operator](https://github.com/Ryan-gomezzz/spectrum_operator) |
+| 🧠 **Trained model** | [huggingface.co/ren9087/rf-spectrum-auction-trained](https://huggingface.co/ren9087/rf-spectrum-auction-trained) |
+| 📖 **API docs** | [ren9087-rf-spectrum-env-v2.hf.space/docs](https://ren9087-rf-spectrum-env-v2.hf.space/docs) |
+
 </div>
 
 ---
