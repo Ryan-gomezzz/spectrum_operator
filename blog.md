@@ -1,0 +1,90 @@
+# The RF Multiagent environment
+
+Say, what if AI agents could negotiate,cooperate perhaps even bluff while being watched by a referee at every move?
+Picture this:
+You are one of three telecom companies(like JIO, Airtel or Vodafone) competing for the same limited radio frequency channels. Two opponents are bots. One is aggressive and the other is cautious or cooperative. There is a referee watching everything and everyone. You have no idea who is who. You can only tell from their behaviour and actions
+
+## Round 1
+We started Round 1 simple: you're the only player. Requests come in like "Jio wants a frequency for LTE" and you decide which channel to give them, at what power level, and explain why. It's like being a traffic controller but for invisible radio waves instead of cars.
+
+## Round 2
+Round 2 made it a real game. Multiplayer.
+
+## The three tasks:
+
+### Auction
+Think of it like eBay, but everyone bids in secret. The three companies bid on frequency licenses. You can see the bid amount after every round, but not during the round itself.
+Bid too high, you lose the money(winner’s curse) but bid too low? You lose the license.
+
+### Dispute
+You and the neighboring company are causing radio interference to each other. The referee asks you all to ‘sort it out’. You pick one of four moves: apologize and back down, negotiate, escalate the fight, or request an audit. The best move depends on whether your opponent is aggressive(they’ll fight back) or whether they are cautious(they’ll negotiate).But you have no idea which type they are and must make an educated guess based on their past behaviour actions.
+
+### Coalition
+A disaster happens. The referee asks all three companies to share their frequencies temporarily to help emergency services. It's the classic prisoner's dilemma where cooperating helps everyone long-term, but defecting gives you a short-term advantage. The referee tracks your reputation: if you cooperate, your reputation goes up, giving you bonuses later. If you defect when your reputation is high, the referee punishes you harder.
+
+## What the AI agent sees and learns
+We are using an LLM (Qwen 0.5B which is a small language model) as the player. At first it makes random, bad decisions. Then we use a training method called GRPO (Group Relative Policy Optimization) to improve it.
+The steps in the training loop:
+1)Show the AI the game state where it can see what channels are available,what the opponents did in the last round, your budget and your reputation.
+2)The ai produces a  decision: a bid amount or ‘cooperate’ or to ‘negotiate’
+3)The environment scores the decision on four things(revenue, interference, compliance and justification).
+4)Use those scores to update the AI’s brains so that it can make better decisions next time.
+5)Repeat 150-300 times.
+
+## The Scorecard
+Every decision gets scored on four things, like a report card:
+**Revenue (45%):** Did you bid smartly? Too much = negative score (you overpaid). Too little = partial credit (you might have lost). Just right = full marks.
+
+**Interference (5%):** Did you cause problems for other companies or protected emergency channels? Zero is perfect. Negative means the referee caught you causing interference.
+
+**Compliance (10%):**: Did you follow the rules? The referee gives you gold stars (COMMENDATION events) for good behavior and red cards (VIOLATION events) for bad behavior.
+
+**Justification (40%):** Did you explain your reasoning well? The AI has to write a short explanation with its decision. If it mentions actual numbers from the game (like "competitor bid 15.0 last round" or "my remaining budget is 42.3"), it gets bonus points. This proves the AI actually read the game state instead of generating generic text.
+
+The justification score is the anti-cheating system. Our system checks if the AI mentions specific numbers that only appear in the current game state. If it does, it gets bonus points. If it writes fancy-sounding nonsense, a secondary AI judge catches it 10% of the time and slashes the score.
+
+## Results after training
+Task:Auction
+After 150 training steps, the auction agent improved by 54.3%. It went from a score of 0.25 to 0.38. The biggest change was in justification.It went from 0.05 to 0.30. The agent learned to actually explain its reasoning using real game data. Even more interesting, compliance flipped from -0.14 to +0.16. The agent literally went from breaking rules to following them.
+| Component | Baseline | Trained | Change |
+|-----------|----------|---------|--------|
+| Overall | 0.25 | 0.38 | +54.3% |
+| Revenue | 0.61 | 0.59 | -0.02 |
+| Interference | -0.69 | -0.44 | +0.25 |
+| Compliance | -0.14 | +0.16 | +0.30 |
+| Justification | 0.05 | 0.30 | +0.25 |
+
+Our first training run with 50 GRPO steps. The model showed a 10.6% improvement, with justification improving from 0.05 to 0.125. This confirmed the training pipeline was working and rewards were flowing correctly.
+
+After scaling to 150 steps, the improvement jumped to 54.3%. Justification went from 0.05 to 0.30.
+
+## Training Curves
+Reward plots
+![Reward Curves](reward_curves.png)
+Loss plots
+![Loss Plot](loss_plot.png)
+Training loss over 150 steps, confirming active learning throughout the run
+
+## The referee and Scalable Oversight
+Every single decision the referee makes is logged as a structured event: a warning, a violation, a commendation. Anyone can pull up this log and check what happened and why. We call this scalable oversight.
+**WARNING**: "You bid 90% of your budget and that's risky"
+**VIOLATION**: "You caused interference on a protected channel"
+**COMMENDATION**: "You cooperated during the emergency"
+**REPUTATION_UPDATE**: "Your reputation went from 0.5 to 0.55"
+
+## Why does this matter? Who would care and why?
+Right now, AI agents are starting to get deployed in real-world negotiations where they are bidding on ad space, managing cloud resources, allocating bandwidth etc, But here's the problem: how do you know the AI is playing fair?
+In our environment, the referee logs every single decision as a structured event. A warning, a violation, a commendation. Anyone, be it a human, a simpler AI, even a basic rule checker can pull up that log and verify what happened. No black box. No "trust me." Just a clear audit trail.
+
+## What's next?
+Full self-play where we drop the scripted bots and let trained agents play against each other. And training the referee itself as a learned agent, closing the scalable oversight loop.
+
+## Links
+- [Live Demo](https://ren9087-rf-spectrum-env-v2.hf.space/visualize)
+- [HF Space](https://huggingface.co/spaces/ren9087/rf-spectrum-env-v2)
+- [GitHub](https://github.com/Ryan-gomezzz/spectrum_operator)
+- [Trained Model](https://huggingface.co/ren9087/rf-spectrum-auction-trained)
+- [API Docs](https://ren9087-rf-spectrum-env-v2.hf.space/docs)
+- [Colab Link](https://colab.research.google.com/drive/168FsGK-gvJ3Zo47b2ykFC-IzS3Nl_F_F?usp=sharing)
+
+
