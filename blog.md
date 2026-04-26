@@ -1,4 +1,5 @@
-# The RF Multiagent environment
+# The RF Spectrum Multi-Agent Environment
+> The radio frequency spectrum multi-agent environment
 
 Say, what if AI agents could negotiate,cooperate perhaps even bluff while being watched by a referee at every move?
 Picture this:
