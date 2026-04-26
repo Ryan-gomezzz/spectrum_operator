@@ -57,7 +57,7 @@ The justification score is the anti-cheating system. Our system checks if the AI
 | Coalition | 0.11 | 0.12 | **+11%** |
 | Dispute | 0.11 | 0.11 | 0% |
 
-All the results averaged over 10 held-out episodes (seeds 200-299).
+All the results averaged over 10 held-out episodes (seeds 200-209).
 
 **Per-component breakdown (Auction):**
 
@@ -83,14 +83,14 @@ After 150 steps of GRPO training, the model references actual game state:
 
 ## Training Curves
 
-# Reward plots
+### Reward plots
 
 **Reward components over 150 GRPO steps (x: training step, y: reward score):**
 Revenue climbed from 0 to 0.8. Justification steadily increased. Overall reward trended upward from 0.25 to above 0.75.
 
 <img src="reward_curves.png" width="600">
 
-# Loss PLots
+### Loss PLots
 
 **Training loss over 150 steps (x: training step, y: loss):**
 Loss increased from near-zero to 0.006.
