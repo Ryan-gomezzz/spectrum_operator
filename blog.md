@@ -70,10 +70,18 @@ After scaling to 150 steps, the improvement jumped to 54.3%. Justification went 
 
 ## Training Curves
 Reward plots
-![Reward Curves](reward_curves.png)
-Loss plots
-![Loss Plot](loss_plot.png)
-Training loss over 150 steps, confirming active learning throughout the run
+<img src="reward_curves.png" width="600">
+
+**Reward components over 150 GRPO steps (x: training step, y: reward score):**
+Revenue climbed from 0 to 0.8. Justification steadily increased. Overall reward trended upward from 0.25 to above 0.75.
+
+Loss PLots
+
+**Training loss over 150 steps (x: training step, y: loss):**
+Loss increased from near-zero to 0.006, confirming active learning throughout the run.
+
+<img src="loss_plot.png" width="600">
+
 
 ## The referee and Scalable Oversight
 Every single decision the referee makes is logged as a structured event: a warning, a violation, a commendation. Anyone can pull up this log and check what happened and why. We call this scalable oversight.
