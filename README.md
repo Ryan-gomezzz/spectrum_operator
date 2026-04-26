@@ -43,6 +43,7 @@ pinned: false
 | 💻 **GitHub** | [github.com/Ryan-gomezzz/spectrum_operator](https://github.com/Ryan-gomezzz/spectrum_operator) |
 | 🧠 **Trained model** | [huggingface.co/ren9087/rf-spectrum-auction-trained](https://huggingface.co/ren9087/rf-spectrum-auction-trained) |
 | 📖 **API docs** | [ren9087-rf-spectrum-env-v2.hf.space/docs](https://ren9087-rf-spectrum-env-v2.hf.space/docs) |
+| 📊 **Slide deck** | [Google Slides](https://docs.google.com/presentation/d/1cRejKbS5YqmxirWOb1Nl5nOr2dquu4ld/edit?usp=sharing&ouid=107453993982747998827&rtpof=true&sd=true) |
 
 </div>
 
