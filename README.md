@@ -44,6 +44,7 @@ pinned: false
 | 🧠 **Trained model** | [huggingface.co/ren9087/rf-spectrum-auction-trained](https://huggingface.co/ren9087/rf-spectrum-auction-trained) |
 | 📖 **API docs** | [ren9087-rf-spectrum-env-v2.hf.space/docs](https://ren9087-rf-spectrum-env-v2.hf.space/docs) |
 | 📊 **Slide deck** | [Google Slides](https://docs.google.com/presentation/d/1cRejKbS5YqmxirWOb1Nl5nOr2dquu4ld/edit?usp=sharing&ouid=107453993982747998827&rtpof=true&sd=true) |
+| 📓 **Training notebook** | [Google Colab](https://colab.research.google.com/drive/168FsGK-gvJ3Zo47b2ykFC-IzS3Nl_F_F?usp=sharing) |
 | 🎥 **Demo video** | [YouTube](https://youtu.be/bYnTYGnRPto) |
 
 </div>
