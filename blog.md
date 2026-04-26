@@ -65,6 +65,7 @@ The justification score is the anti-cheating system. Our system checks if the AI
 | Compliance | -0.14 | +0.16 | +0.30 |
 | Justification | 0.05 | 0.30 | +0.25 |
 
+The auction task had the richest reward signal across all four components, making it the strongest learner. Coalition showed modest gains at +11%. Dispute's reward signal was too sparse for 50 training steps with a 0.5B model. A larger model or more steps would likely show similar improvement.
 
 After 150 training steps, the auction agent improved by 54.3%. It went from a score of 0.25 to 0.38. The biggest change was in justification.It went from 0.05 to 0.30. The agent learned to actually explain its reasoning using real game data. Even more interesting, compliance flipped from -0.14 to +0.16. The agent literally went from breaking rules to following them.
 
@@ -103,6 +104,9 @@ Full self-play where we drop the scripted bots and let trained agents play again
 
 ## Links
 - [Live Demo](https://ren9087-rf-spectrum-env-v2.hf.space/visualize)
+
+  (Note: the live demo runs on varied seeds which means that the results differ per run. The evaluation numbers above are averaged over 10 held-out episodes for consistency.)
+  
 - [HF Space](https://huggingface.co/spaces/ren9087/rf-spectrum-env-v2)
 - [GitHub](https://github.com/Ryan-gomezzz/spectrum_operator)
 - [Trained Model](https://huggingface.co/ren9087/rf-spectrum-auction-trained)
