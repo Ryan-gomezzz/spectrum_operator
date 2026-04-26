@@ -26,9 +26,13 @@ A disaster happens. The referee asks all three companies to share their frequenc
 We are using an LLM (Qwen 0.5B which is a small language model) as the player. At first it makes random, bad decisions. Then we use a training method called GRPO (Group Relative Policy Optimization) to improve it.
 The steps in the training loop:
 1)Show the AI the game state where it can see what channels are available,what the opponents did in the last round, your budget and your reputation.
-2)The ai produces a  decision: a bid amount or ‘cooperate’ or to ‘negotiate’
+
+2)The ai produces a  decision: a bid amount or ‘cooperate’ or to ‘negotiate’.
+
 3)The environment scores the decision on four things(revenue, interference, compliance and justification).
+
 4)Use those scores to update the AI’s brains so that it can make better decisions next time.
+
 5)Repeat 150-300 times.
 
 ## The Scorecard
