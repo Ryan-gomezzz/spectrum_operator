@@ -41,7 +41,7 @@ Every decision gets scored on four things, like a report card:
 
 **Interference (5%):** Did you cause problems for other companies or protected emergency channels? Zero is perfect. Negative means the referee caught you causing interference.
 
-**Compliance (10%):**: Did you follow the rules? The referee gives you gold stars (COMMENDATION events) for good behavior and red cards (VIOLATION events) for bad behavior.
+**Compliance (10%):** Did you follow the rules? The referee gives you gold stars (COMMENDATION events) for good behavior and red cards (VIOLATION events) for bad behavior.
 
 **Justification (40%):** Did you explain your reasoning well? The AI has to write a short explanation with its decision. If it mentions actual numbers from the game (like "competitor bid 15.0 last round" or "my remaining budget is 42.3"), it gets bonus points. This proves the AI actually read the game state instead of generating generic text.
 
